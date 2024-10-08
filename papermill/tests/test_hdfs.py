@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from ..iorw import HDFSHandler
 
 
@@ -14,7 +16,8 @@ class MockHadoopFileSystem(MagicMock):
     def open_output_stream(self, path):
         return MockHadoopFile()
 
-class MockHadoopFile(object):
+
+class MockHadoopFile:
     def __init__(self):
         self._content = b'Content of notebook'
 
@@ -31,11 +34,13 @@ class MockHadoopFile(object):
         self._content = new_content
         return 1
 
-class MockFileInfo(object):
+
+class MockFileInfo:
     def __init__(self, path):
         self.path = path
 
 
+@pytest.mark.skip(reason="No valid dep package for python 3.12 yet")
 @patch('papermill.iorw.HadoopFileSystem', side_effect=MockHadoopFileSystem())
 class HDFSTest(unittest.TestCase):
     def setUp(self):
@@ -43,17 +48,13 @@ class HDFSTest(unittest.TestCase):
 
     def test_hdfs_listdir(self, mock_hdfs_filesystem):
         client = self.hdfs_handler._get_client()
-        self.assertEqual(
-            self.hdfs_handler.listdir("hdfs:///Projects/"), ['test1.ipynb', 'test2.ipynb']
-        )
+        self.assertEqual(self.hdfs_handler.listdir("hdfs:///Projects/"), ['test1.ipynb', 'test2.ipynb'])
         # Check if client is the same after calling
         self.assertIs(client, self.hdfs_handler._get_client())
 
     def test_hdfs_read(self, mock_hdfs_filesystem):
         client = self.hdfs_handler._get_client()
-        self.assertEqual(
-            self.hdfs_handler.read("hdfs:///Projects/test1.ipynb"), b'Content of notebook'
-        )
+        self.assertEqual(self.hdfs_handler.read("hdfs:///Projects/test1.ipynb"), b'Content of notebook')
         self.assertIs(client, self.hdfs_handler._get_client())
 
     def test_hdfs_write(self, mock_hdfs_filesystem):
